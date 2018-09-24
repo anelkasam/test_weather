@@ -1,6 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
+
+from app.models import User
 
 
 class LoginForm(FlaskForm):
@@ -10,5 +12,25 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 
-class CityForm(FlaskForm):
-    city_name=StringField('Enter city', validators=[DataRequired()])
+class RegistrationForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    password2 = PasswordField('Repeat password',
+                              validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Register')
+
+    def validate_username(self, username):
+        user = User.query.filter_by(username=username.data).first()
+        if user:
+            raise ValidationError('User with given username is already exist.')
+
+    def validate_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user:
+            raise ValidationError('User with given email is already exist.')
+
+
+class CitySearchForm(FlaskForm):
+    search = StringField('City')
+    submit = SubmitField('Search')

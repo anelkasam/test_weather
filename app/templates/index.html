@@ -1,5 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Hi, {{ user.name }}!</h1>
+    <table>
+        <tr valign="top">
+            <td><img src="{{ current_user.avatar(128) }}"></td>
+            <td><h1>User: {{ current_user.username }}</h1></td>
+        </tr>
+    </table>
+    <hr>
+    <h3>To get weather history or forecast choose country and city:</h3>
+    <form method="post", action="" novalidate>
+        {{ context.form.hidden_tag() }}
+        <p>
+            {{ context.form.search.label }}<br>
+            {{ context.form.search(size=32) }}
+        </p>
+        <p>{{ context.form.submit() }}</p>
+    </form>
+    {% if context.cities %}
+        <p>Choose the city from the list:</p>
+        <ul>
+            {% for city in context.cities %}
+                <a href="{{ url_for('weather', city_id=city.id) }}">{{ city.name }} ({{ city.country }})</a>
+            {% endfor %}
+        </ul>
+    {% endif %}
 {% endblock %}
