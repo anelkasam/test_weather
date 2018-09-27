@@ -1,5 +1,78 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <style>
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+    </style>
+
     <p>Weather information for the {{ context.city.name }} ({{ context.city.country }})</p>
+    {% if context.forecast %}
+        <h2>Forecast for the next 5 days:</h2>
+        <table>
+            <tr>
+                <th>Data</th>
+                <th>Temperature (min/max)</th>
+                <th>Wind speed</th>
+                <th>Clouds</th>
+                <th>Pressure</th>
+                <th>Description</th>
+            </tr>
+            {% for data in context.forecast %}
+                <tr>
+                    <td>{{ data.data_time }}</td>
+                    <td>{{ data.temperature }} ({{ data.temperature_min }}/{{ data.temperature_max }})</td>
+                    <td>{{ data.windSpeed }}</td>
+                    <td>{{ data.clouds }}</td>
+                    <td>{{ data.pressure }}</td>
+                    <td>{{ data.description }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>There are no information for the forecast.</p>
+    {% endif %}
+
+    {{ context.forecast_plots|safe }}
+
+    {% if context.history %}
+        <h2>History:</h2>
+        <table>
+            <tr>
+                <th>Data</th>
+                <th>Temperature (min/max)</th>
+                <th>Wind speed</th>
+                <th>Clouds</th>
+                <th>Pressure</th>
+                <th>Description</th>
+            </tr>
+            {% for data in context.history %}
+                <tr>
+                    <td>{{ data.data_time }}</td>
+                    <td>{{ data.temperature }} ({{ data.temperature_min }}/{{ data.temperature_max }})</td>
+                    <td>{{ data.windSpeed }}</td>
+                    <td>{{ data.clouds }}</td>
+                    <td>{{ data.pressure }}</td>
+                    <td>{{ data.description }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        There are no history information for the weather for {{ context.city.name }} ({{ context.city.country }}).
+    {% endif %}
+    {{ context.history_plots|safe }}
+
 {% endblock %}

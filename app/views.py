@@ -9,6 +9,7 @@ from werkzeug.urls import url_parse
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, CitySearchForm
 from app.models import User, City, Forecast
+from app.utils import plot_forecast
 
 
 @app.before_request
@@ -96,22 +97,39 @@ def list_cities():
 
 @app.route('/weather/<city_id>')
 def weather(city_id):
-    historic_url = f'http://history.openweathermap.org/data/2.5/history/city?' \
-                   f'id={id}&type=hour&start={start}&end={end}&appid={appid}'
-    forecast_url = f'api.openweathermap.org/data/2.5/forecast?' \
-                   f'id={city_id}&mode=json&appid={appid}'
+    temp_delta = 273.15
     city = City.query.get(city_id)
-    context = {'city': city}
+    forecasts = Forecast.query.filter(Forecast.city_id == city.id,
+                                      Forecast.data_time >= datetime.now()).all()
+    context = {'city': city,
+               'history': Forecast.query.filter(Forecast.city_id == city.id,
+                                                Forecast.data_time < datetime.now()).all()}
+
+    forecast_params = {'id': city_id,
+                       'mode': 'json',
+                       'appid': app.config["OPENWEATHERMAP_API_KEY"]}
+    forecast_data = requests.get('http://api.openweathermap.org/data/2.5/forecast',
+                                 params=forecast_params).json()
+    if forecast_data['cod'] != '200':
+        return render_template('weather.html', context=context)
+
+    forecast_objs = []
+    for data in forecast_data['list']:
+        forecast = Forecast(city_id=city.id,
+                            data_time=datetime.fromtimestamp(data['dt']),
+                            temperature=int(data['main']['temp'] - temp_delta),
+                            temperature_min=int(data['main']['temp_min'] - temp_delta),
+                            temperature_max=int(data['main']['temp_max'] - temp_delta),
+                            windSpeed=data['wind']['speed'],
+                            clouds=data['clouds']['all'],
+                            pressure=data['main']['pressure'],
+                            description=', '.join(d['description'] for d in data['weather']))
+        forecast_objs.append(forecast)
+        if forecast not in forecasts:
+            db.session.add(forecast)
+    db.session.commit()
+
+    context['forecast'] = forecast_objs
+    context['forecast_plots'] = plot_forecast(forecast_objs)
+    context['history_plots'] = plot_forecast(context['history'])
     return render_template('weather.html', context=context)
-
-
-def get_data_from_openweathermap(city_id):
-    """
-    Get data from the openweathermap.org for the city for the last 2 weeks and forecast for the next 5 days.
-    """
-    delta = 1209600  # 2 weeks
-    historic_url = f'http://history.openweathermap.org/data/2.5/history/city?' \
-                   f'id={city_id}&type=hour&start={datetime.utcnow() - delta}&end={datetime.utcnow()}' \
-                   f'&appid={app.config["OPENWEATHERMAP_API_KEY"]}'
-    forecast_url = f'api.openweathermap.org/data/2.5/forecast?' \
-                   f'id={city_id}&mode=json&appid={app.config["OPENWEATHERMAP_API_KEY"]}'

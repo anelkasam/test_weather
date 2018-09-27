@@ -41,10 +41,14 @@ class City(db.Model):
 
 
 class Forecast(db.Model):
+    __table_args__ = (db.UniqueConstraint('city_id', 'data_time', name='_city_datetime_uc'),)
+
     id = db.Column(db.Integer, primary_key=True)
     city_id = db.Column(db.Integer, db.ForeignKey('city.id'))
     data_time = db.Column(db.DateTime, index=True)
     temperature = db.Column(db.Float)
+    temperature_min = db.Column(db.Float)
+    temperature_max = db.Column(db.Float)
     windSpeed = db.Column(db.Float)
     clouds = db.Column(db.String(50))
     pressure = db.Column(db.Float)
@@ -53,6 +57,9 @@ class Forecast(db.Model):
     def __repr__(self):
         city = City.query.get(self.city_id)
         return f'Forecast for {city} on {self.data_time}: '
+
+    def __eq__(self, other):
+        return self.city_id == other.city_id and self.data_time == other.data_time
 
 
 @login.user_loader

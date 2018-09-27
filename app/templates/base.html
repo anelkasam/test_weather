@@ -1,7 +1,7 @@
 <html>
     <head>
       {% if title %}
-      <title>{{ title }} - Microblog</title>
+      <title>{{ title }} - Weather scraper</title>
       {% else %}
       <title>Welcome to Weather scraper</title>
       {% endif %}
@@ -10,7 +10,6 @@
         <div>
             Weather scraper:
             <a href="{{ url_for('index') }}">Home</a>
-            <a href="{{ url_for('list_cities') }}">Cities</a>
             {% if current_user.is_anonymous %}
                 <a href="{{ url_for('login') }}">Login</a>
             {% else %}
